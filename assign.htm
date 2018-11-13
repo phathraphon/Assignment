@@ -1,0 +1,312 @@
+<html lang="en">
+
+<head>
+  <title>Assignment</title>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css">
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+  <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"></script>
+  <style>
+    ul{
+    list-style-type: none;
+    float: left;
+    border-collapse: collapse;
+  }
+  #pageindex{
+    padding-top: 2%;
+  }
+
+
+  </style>
+</head>
+
+<body>
+
+  <div class="container">
+    <h2>Basic Table</h2>
+    <button type="button" class="btn btn-info btn-lg" data-toggle="modal" data-target="#myModal" style="float:right">Add
+      User</button>
+
+    <!-- Modal-->
+    <div class="modal fade" id="myModal" role="dialog">
+      <div class="modal-dialog">
+
+        <!-- New User-->
+        <div class="modal-content">
+          <div class="modal-header">
+            <button type="button" class="close" data-dismiss="modal">&times;</button>
+            <h4 class="modal-title">New User</h4>
+          </div>
+          <div class="modal-body">
+            <form name="usernew" method="POST" onsubmit="newuser()">
+              Firstname:<br>
+              <input type="text" name="firstname" id="firstname" placeholder="firstname" required><br><br>
+              Lastname:<br>
+              <input type="text" name="lastname" id="lastname" placeholder="lastname" required><br><br>
+              Email Id:<br>
+              <input type="email" name="email" id="email" placeholder="email@abc.com" required><br><br>
+              Contact No:<br>
+              <input type="number" name="phone" id="phone" placeholder="1234567890" required><br><br>
+              <input type="submit" value="submit">
+            </form>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+
+
+
+    <!-- Model -->
+    <div class="modal fade" id="myEdit" role="dialog">
+      <div class="modal-dialog">
+
+        <!-- Edit User -->
+        <div class="modal-content">
+          <div class="modal-header">
+            <button type="button" class="close" data-dismiss="modal">&times;</button>
+            <h4 class="modal-title">Edit User</h4>
+          </div>
+          <div class="modal-body">
+            <form name="useredit" method="POST">
+              Firstname:<br>
+              <input type="text" name="firstname" id="fname" value=""><br><br>
+              Lastname:<br>
+              <input type="text" name="lastname" id="lname" value=""><br><br>
+              Email Id:<br>
+              <input type="email" name="email" id="mail" value="" readonly><br><br>
+              Contact No:<br>
+              <input type="number" name="phone" id="no" value=""><br><br>
+              <input type="submit" value="submit" id="asd">
+            </form>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+
+
+    <!-- User table -->
+
+    <table class="table table-bordered" id="Userdata">
+      <thead>
+        <tr>
+          <th>Firstname</th>
+          <th>Lastname</th>
+          <th>Email</th>
+          <th>Phone No</th>
+          <th>Modify</th>
+        </tr>
+      </thead>
+      <tbody id="tablecontent">
+      </tbody>
+    </table>
+    <ul class="pagination" style="margin-left: 30%">
+      <li><a id="prev">Prev</a></li>
+      <li><a id="pageindex"></a></li>
+      <li><a id="next">Next</a></li>
+    </ul>
+  </div>
+
+
+  <!-- Script Code -->
+  <script>
+    let Userid;
+    var xmlhttp;
+    let i = 1;
+    let maxpage;
+    let pgind;
+
+
+    // add new user
+    function newuser() {
+      if (validnew()) {
+        var usernew = {
+          firstName: $('#firstname').val(),
+          lastName: $('#lastname').val(),
+          email: $('#email').val(),
+          phone: $('#phone').val(),
+        }
+        userfinal(usernew);
+      }
+    }
+
+
+    function userfinal(data) {
+      $.post('http://assignmentapi.aspcore.net/api/users', data)
+    }
+
+
+
+    // valid edit
+    function validedit() {
+      let phonecheck = document.forms['useredit']['phone'].value;
+      if (phonecheck.toString().length != 10) {
+        alert("enter correct no:");
+        return false;
+      }
+      return true;
+    }
+
+
+    // valid new
+    function validnew() {
+      let phonecorrect = document.forms['usernew']['phone'].value;
+      let mailcorrect = document.forms['usernew']['email'].value;
+      let filter = /^([a-zA-Z0-9_\.\-])+\@(([a-zA-Z0-9\-])+\.)+([a-zA-Z0-9]{2,4})+$/;
+      if (phonecorrect.toString().length != 10) {
+        alert("enter correct no:");
+        return false;
+      }
+
+      if (!filter.test(mailcorrect)) {
+        alert("enter correct mail id:")
+        return false;
+      }
+      return true;
+    }
+
+
+    // to display json data
+    function displaydata() {
+      $.ajax({
+        url: 'http://assignmentapi.aspcore.net/api/users',
+        dataType: 'json',
+        type: 'get',
+        success: function (data) {
+          maxpage = Math.ceil(data.data.length / 10);
+          var userdata = '';
+          var tableindex = '';
+          $(data.data).each(function (index, value) {
+            if (index >= (i - 1) * 10 && index < i * 10) {
+              userdata += '<tr>';
+              userdata += '<td>' + value.firstName + '</td>';
+              userdata += '<td>' + value.lastName + '</td>';
+              userdata += '<td>' + value.email + '</td>';
+              userdata += '<td>' + value.phone + '</td>';
+              userdata += '<td>' + '<button onclick="edit(' + value.id + ')" data-toggle="modal" data-target="#myEdit">' + "Edit" + '</button>' + ' / ' +
+                '<button onclick="del(' + value.id + ')">' + "Delete" + '</button>' + '</td>';
+              userdata += '</tr>';
+            }
+
+          });
+          for (let x = 1; x <= maxpage; x++) {
+            pgind = x;
+            tableindex += '<ul>';
+            tableindex += '<li onclick="index(' + pgind + ')">' + x + '</li>';
+            tableindex += '</ul>'
+          }
+          document.getElementById("tablecontent").innerHTML = userdata;
+          document.getElementById("pageindex").innerHTML = tableindex;
+        }
+      })
+    }
+
+
+
+
+    // pagination
+
+
+    function index(z) {
+      i = z;
+      displaydata();
+    }
+
+    $('#next').click(function () {
+      if (i != maxpage) {
+        i += 1;
+        displaydata();
+      }
+    })
+
+    $('#prev').click(function () {
+      if (i != 1) {
+        i = i - 1;
+        displaydata();
+      }
+    })
+
+
+
+
+
+
+    // edit function
+    function edit(id) {
+      Userid = id;
+
+      $.ajax({
+        url: 'http://assignmentapi.aspcore.net/api/users',
+        dataType: 'json',
+        type: 'get',
+        success: function (data) {
+          var userdata = '';
+          $(data.data).each(function (index, value) {
+            if (value.id == id) {
+              document.getElementById("fname").value = value.firstName;
+              document.getElementById("lname").value = value.lastName;
+              document.getElementById("mail").value = value.email;
+              document.getElementById("no").value = value.phone;
+            }
+          });
+
+        }
+
+      })
+    }
+
+    // delete function
+    function del(id) {
+      return new Promise(resolve => {
+        $.ajax({
+          url: 'http://assignmentapi.aspcore.net/api/users/' + id,
+          type: 'delete',
+          success: function (response) {
+            resolve({ data: response.data }),
+              alert("deleted")
+            displaydata();
+          }
+        })
+      })
+    }
+
+
+    // saving edit
+    $("#asd").click(function () {
+      if (validedit()) {
+        var usered = {
+          firstName: $('#fname').val(),
+          lastName: $('#lname').val(),
+          email: $('#mail').val(),
+          phone: $('#no').val(),
+        }
+        editfinal(usered);
+      }
+    });
+
+
+    function editfinal(data) {
+      $.post('http://assignmentapi.aspcore.net/api/users/' + Userid, data)
+    }
+
+
+    //  reload
+    $(document).ready(function () {
+      displaydata();
+    })
+
+
+  </script>
+
+</body>
+
+</html>
